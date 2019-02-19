@@ -1,30 +1,15 @@
 # buttonsite
 
-> A Vue.js project
+## 使い方
+1. /dist/voice もしくは /static/voiceを作成
+2. voice配下にタイトルディレクトリを作成
+3. タイトルディレクトリの中にmp3を配置
 
-## Build Setup
-
-``` bash
-# install dependencies
-npm install
-
-# serve with hot reload at localhost:8080
-npm run dev
-
-# build for production with minification
-npm run build
-
-# build for production and view the bundle analyzer report
-npm run build --report
-
-# run unit tests
-npm run unit
-
-# run e2e tests
-npm run e2e
-
-# run all tests
-npm test
+```
+pip3 install flask flask_restful flask_cors
 ```
 
-For detailed explanation on how things work, checkout the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+```
+npm run build
+python3 server.py
+```
