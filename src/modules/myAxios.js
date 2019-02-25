@@ -4,7 +4,8 @@ const debug = process.env.NODE_ENV != 'production'
 const debug_url = "http://localhost:5000"
 
 const onSuccess = (res) => {
-    if (debug) console.log(' << ' + JSON.stringify(res.data))
+    // if (debug) console.log(' << ' + JSON.stringify(res.data))
+    if(debug) console.log("Success")
     return Promise.resolve(res)
 }
 
@@ -14,8 +15,9 @@ const onError = (res) => {
 }
 
 const accessUrl = (endpoint) => {
-    if (debug) return urljoin(debug_url, endpoint)
-    else return endpoint
+    return endpoint
+    // if (debug) return urljoin(debug_url, endpoint)
+    // else return endpoint
 }
 
 const debugMessage = (type, url, params) => {

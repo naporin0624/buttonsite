@@ -3,6 +3,7 @@
 require('./check-versions')()
 
 process.env.NODE_ENV = 'production'
+require("child_process").spawn('python3', ['../jsonMake.py']);
 
 const ora = require('ora')
 const rm = require('rimraf')

@@ -10,7 +10,6 @@ CORS(app)
 api = Api(app)
 
 
-
 class test(Resource):
     def get(self):
         path = "static/voice"

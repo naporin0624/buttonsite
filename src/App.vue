@@ -1,8 +1,8 @@
 <template>
   <div id="app">
-    <header>
+    <!-- <header>
       <span>〇〇ボタンメーカー</span>
-    </header>
+    </header> -->
     <main>
       <router-view></router-view>
     </main>
@@ -29,7 +29,7 @@ body {
 
 main {
   text-align: center;
-  margin-top: 40px;
+  /* margin-top: 40px; */
 }
 
 header {
