@@ -7,6 +7,22 @@
     
     transition(name="fade")
       div#main-contents(v-if="renderCheck")
+        //- v-menu(
+        //-   transition="slide-y-transition"
+        //-   bottom
+        //-   max-height="300"
+        //- )
+        //-   v-btn(
+        //-     slot="activator"
+        //-   ) タイトルリスト
+        //-   v-list
+        //-     v-list-tile(
+        //-       v-for="(item, index) in buttonDataFilter"
+        //-       :key="index"
+        //-       @click="selectTitle=item.title"
+        //-     )
+        //-       v-list-tile-title {{ item.title }}
+
         div.each-button-contents(
           v-for="eachData in buttonDataFilter" 
           :key="eachData.title"
@@ -19,23 +35,41 @@
             ) {{ eachButton|cutOutNameFromPath }}
           hr
 
-    div#footer
-      div.controler
-      v-btn(
-        v-for="icon in audioControlIcon" 
-        :key="icon.name" 
-        fab 
-        outline 
-        icon 
-        color="black"
-      )
-        v-icon {{icon.name}}
-      div.progressbar
-      v-progress-linear(
-        color="blue"
-        height="5"
-        :value="audioProgressBar"
-      )
+    v-footer(fixed height="10vh" fill-height="true")
+      v-container(grid-list-xs fluid)
+        v-layout(row wrap)
+          v-flex(xs3)
+            v-icon(
+              v-for="icon in audioControlIcon" 
+              :key="icon.name"
+              x-large
+              @click="controlButoonEvent(icon.name)"
+            ) {{icon.name}}
+          
+          v-flex(xs2)
+            v-slider(v-model="slider")
+          
+          v-flex(xs5)
+            v-card(flat)
+              h3 nowPlaying
+              p {{playingVoiceName|cutOutNameFromPath}}
+          
+          v-flex(xs2)
+            v-icon(large) list
+          
+          //- v-flex(xs2)
+          //-   v-text-field(
+          //-     append-icon="search"
+          //-     box
+          //-     height="auto"
+          //-   )
+
+      //-   h5 音声タイトル
+      //-   v-progress-linear(
+      //-     color="blue"
+      //-     height="5"
+      //-     :value="audioProgressBar"
+      //-   )
 </template>
 
 <script>
@@ -45,50 +79,33 @@
     data() {
       return {
         buttonData: [],
-        audioControlIcon:{
-          back: {
-            name:'fast_rewind',
-          },
-          play: {
-            name: 'play_arrow',
-          },
-          pause: {
-            name: 'pause',
-          },
-          forward: {
-            name: 'fast_forward',
-          }
-        },
-        //再生しているインデックスを示す
-        audioQueIndex:0,
+        selectTitle: null,
+        slider: 30,
         audioQue: [],
         ad: new Audio(),
-        adConfig:{
-          currentTime: 0,
-          duration:1
-        },
         playFlag: true,
+        playingVoiceName: "",
       }
     },
     created() {
       //voiceディレクトリ構成から生成されたjsonを呼び出す
       axios_t.get("static/button.json").then(res => {
         this.buttonData = res.data
+        const firstShowButtonIndex = Math.floor(Math.random()*(this.buttonData.length-1))
+        this.selectTitle = res.data[firstShowButtonIndex].title
       })
     },
     mounted() {
       //audioにイベントリスナーを設置
       //音声が再生可能なら発火
       this.ad.addEventListener('loadstart', () => {
-        this.adConfig.currentTime = 0
         this.playFlag = false
       })
       //音声が再生終了したら発火
       //次の音声を探しにいく
       this.ad.addEventListener('ended', () => {
         this.playFlag = true
-        const url = this.nextAudioURL()
-        this.playAudioFromURL(url)
+        this.playAudioFromQue()
       })
       this.ad.addEventListener("pause", ()=>{
         console.log("pauseEvent")
@@ -97,20 +114,51 @@
         console.log("playEvent")
       })
       this.ad.addEventListener("timeupdate", ()=>{
-        this.adConfig.duration = this.ad.duration;
-        this.adConfig.currentTime = this.ad.currentTime
+        // this.adConfig.duration = this.ad.duration;
+        // this.adConfig.currentTime = this.ad.currentTime
       })
     },
     filters:{
       cutOutNameFromPath(urlPath){
         const retData = urlPath.split('/').pop().replace('.mp3', '')
         return retData
-      }
+      },
     },
     methods: {
       buttonAction(buttonURLPath){
-        console.log("buttonAction",buttonURLPath)
         this.audioQue.push(buttonURLPath)
+        if(this.playFlag)this.playAudioFromQue()
+      },
+      playAudioFromQue(){
+        if(this.audioQue.length>0){
+          const url = this.audioQue.shift()
+          this.ad.src = url
+          this.playingVoiceName = url
+          this.ad.play()
+          this.playFlag = false
+        }else{
+          console.log("Que empty")
+          this.playFlag = true
+        }
+      },
+      controlButoonEvent(iconName){
+        switch(iconName){
+          case 'fast_rewind':
+            console.log("戻る")
+            break
+          case 'play_arrow':
+            console.log("再生")
+            break
+          case 'pause':
+            console.log("停止")
+            break
+          case 'fast_forward':
+            console.log("進む")
+            break
+          default:
+            console.log("？？")
+            break
+        }
       },
       nextButtonEvent(){
 
@@ -124,128 +172,6 @@
       pauseButtonEvent(){
 
       }
-      /*
-      //ボタンが押されたのイベント関数
-      buttonAction(indexI, indexJ) {
-        console.log("buttonAction")
-        //jsonから使用するデータを抽出
-        const data = this.buttonData[indexI]
-        //urlを生成して再生キューに入れる
-        this.genURLForPlayAfterInsertQue(data, indexJ)
-        //キューに入っている音声を取り出す
-        const url = this.nextAudioURL()
-        //再生する
-        this.playManager(url)
-      },
-      playManager(url){
-        console.log("playManager", url, this.audioQue, this.audioQueIndex)
-        //引数urlがundefinedなら
-        if(url==null || url == undefined){
-          this.playFlag = true
-        }else{
-          //再生フラグがtrueかつ再生キューが存在するなら再生フラグを折る
-          if(this.playFlag && this.audioQueCheck()){
-            this.playFlag = this.playAudio(url)
-          }
-          //再生フラグがfalseで再生キューもないなら再生フラグを立てる
-          else if(!this.playFlag && !this.audioQueCheck()){
-            this.playFlag = true
-          }
-        }
-      },
-      //音声を再生する関数
-      playAudio(url) {
-        this.ad.src = url
-        this.ad.play()
-        return false
-      },
-      //キューにurlをセットする関数
-      insertQue(url) {
-        this.audioQue.push(url)
-      },
-      //urlを受け取って音声ファイルの名前のみを返す関数 -> return None
-      audioTitle(targetURL) {
-        if (targetURL == null) return this.nextMessage
-        let url = decodeURIComponent(targetURL)
-        url = url.split("/")
-        return url[url.length - 1].replace(".mp3", "")
-      },
-      //再生するためのURLを生成する関数
-      genURLForPlayAfterInsertQue(mp3Data, index) {
-        //static以下のどのディレクトリを使うかをjsonから選択
-        const basedir = mp3Data.basepath
-        //mp3が格納されているディレクトリを選択
-        const subdir = mp3Data.title
-        //mp3を選択
-        const fileName = mp3Data.button[index]
-        //undefinedの場合が稀にあるので排除
-        if (fileName == undefined) return 0;
-        //access urlを作成
-        let url = "static/" + basedir + "/" + subdir + "/" + fileName
-        //再生キューに追加
-        this.insertQue(url)
-      },
-      //次の音声URLを吐き出せるかチェックする関数
-      nextAudioURLCheck(){
-        console.log("nextAudioURL")
-        
-        if (this.audioQueIndex == this.audioQue.length-1) return false
-        else return true
-        // else{
-        //   this.audioQueIndex+=1
-        //   const url = this.audioQue[this.audioQueIndex]
-        //   console.log(">>>", url)
-        //   return url
-        // }
-      },
-      //前の音声URLを吐き出せるかチェックする関数
-      prevAudioURLCheck(){
-        console.log("prevAudioURL")
-        if(this.audioQueIndex==0) return false
-        else return true
-        // else{
-        //   this.audioQueIndex-=1
-        //   const url = this.audioQue[this.audioQueIndex]
-        //   console.log(">>>",url)
-        //   return url
-        // }
-      },
-      //再生キューのリストサイスが1以上か確認
-      audioQueCheck(){
-        const size = this.audioQue.length - this.audioQueIndex
-        if(size>=1) return true
-        else return false
-      },
-      //オーディオコントロールボタンが押されたら発火
-      audioControlButton(icon){
-        console.log("audioControlButton")
-        console.log(this.ad.src, this.ad.currentTime)
-        //戻るボタン
-        if(icon=="fast_rewind"){
-          this.ad.currentTime = 0.0
-        }
-        //再生ボタン
-        else if(icon=="play_arrow"){
-          if(this.ad.currentTime>0.5){
-            this.ad.play()
-            this.playFlag = false
-          }else{
-            const url = this.nextAudioURL()
-            this.playManager(url)
-          }
-        }
-        //進むボタン
-        else if(icon=="fast_forward"){
-          const url = this.nextAudioURL()
-          this.playManager(url)
-        }
-        //止めるボタン
-        else if(icon="pause"){
-          this.ad.pause()
-          this.playFlag = true
-        }else console.log(icon)
-      },
-      */
     },
     computed: {
       renderCheck(){
@@ -258,12 +184,7 @@
         return ret
       },
       audioProgressBar(){
-        return this.adConfig.currentTime*100/this.adConfig.duration
-      },
-    },
-    watch: {
-      audioQue(item) {
-        console.log(item[this.audioQueIndex++])
+        // return this.adConfig.currentTime*100/this.adConfig.duration
       }
     }
   }
@@ -284,34 +205,18 @@
     padding-left: 10px
   }
   /*サブタイトル*/
-  h2 {
+  .each-button-contents h2 {
     text-align: left;
     padding-left: 10px;
   }
   /*ボタン生成時の動作*/
   .fade-enter-active,
   .fade-leave-active {
-    transition: opacity .3s;
+    transition: opacity .5s;
   }
   .fade-enter,
   .fade-leave-to {
     opacity: 0;
-  }
-  /*フッター*/
-  #footer {
-    position: fixed;
-    background-color: rgb(194, 194, 194);
-    color: #ffffff;
-    bottom: 0;
-    width: 100%;
-    /* height: 70px; */
-  }
-
-  /*今はいらない*/
-  .inline-block {
-    display: inline-block;
-    /* margin-top: 10px */
-    width: 300px;
   }
 
 </style>

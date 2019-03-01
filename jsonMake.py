@@ -24,7 +24,7 @@ def make_json(dir_info_tuple):
     basename = path.split("/")[-1]
     ret_list = [{
         "title":d.split("/")[-1],
-        "button":[join("static", basename, d, f) for f in os.listdir(d)]
+        "button":[join(d, f).replace("dist/", "") for f in os.listdir(d)]
     } for d in dir_list]
     return ret_list
 

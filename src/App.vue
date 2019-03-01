@@ -1,17 +1,26 @@
-<template>
-  <div id="app">
-    <!-- <header>
-      <span>〇〇ボタンメーカー</span>
-    </header> -->
-    <main>
-      <router-view></router-view>
-    </main>
-  </div>
+<template lang="pug">
+  v-app
+    header-component(:drawer.sync="drawer")
+    drawer-component(:drawer.sync="drawer")
+      r-link(:link="'Main'")
+    v-content
+      router-view
 </template>
 
 <script>
+import HeaderComponent from "./components/organisms/Header";
+import DrawerComponent from './components/organisms/Drawer';
 export default {
-  name: 'app'
+  name: 'app',
+  components:{
+    "header-component": HeaderComponent,
+    "drawer-component": DrawerComponent
+  },
+  data(){
+    return{
+      drawer: false
+    }
+  }
 }
 </script>
 
